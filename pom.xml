@@ -19,7 +19,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<mainClass>${project.groupId}.${project.artifactId}.Main</mainClass>
-		<build.number>0</build.number>
+		<apiVersion>dev-SNAPSHOT</apiVersion>
+		<buildNumber>0</buildNumber>
 	</properties>
 
 	<!-- License -->
@@ -51,26 +52,41 @@
 			<url>http://repo.spout.org</url>
 		</repository>
 	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>spout-plugins</id>
+			<url>http://repo.spout.org</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>osxappbundle-maven-plugin</id>
+			<url>http://openshapa.org/maven2</url>
+		</pluginRepository>
+	</pluginRepositories>
 
 	<!-- Dependencies -->
 	<dependencies>
 		<dependency>
 			<groupId>org.spoutcraft</groupId>
 			<artifactId>launcherapi</artifactId>
-			<version>dev-SNAPSHOT</version>
+			<version>${apiVersion}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>1.6</version>
-			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>jdom</groupId>
+			<artifactId>jdom</artifactId>
+			<version>1.0</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
@@ -82,14 +98,14 @@
 	</dependencies>
 
 	<build>
-		<defaultGoal>clean</defaultGoal>
+		<defaultGoal>clean license:format package</defaultGoal>
 		<sourceDirectory>${basedir}/src/main/java</sourceDirectory>
 		<!-- Resources -->
 		<resources>
 			<resource>
 				<targetPath>.</targetPath>
 				<filtering>false</filtering>
-				<directory>${basedir}/src</directory>
+				<directory>${basedir}</directory>
 				<includes>
 					<include>LICENSE.txt</include>
 				</includes>
@@ -119,6 +135,35 @@
 		</resources>
 		<!-- Plugins -->
 		<plugins>
+			<!-- License headers check plugin -->
+			<plugin>
+				<groupId>com.mycila.maven-license-plugin</groupId>
+				<artifactId>maven-license-plugin</artifactId>
+				<version>1.10.b1</version>
+				<executions>
+					<execution>
+						<id>check-headers</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<basedir>${basedir}</basedir>
+					<header>${basedir}/HEADER.txt</header>
+					<includes>
+						<include>src/**</include>
+						<include>**/test/**</include>
+					</includes>
+					<encoding>UTF-8</encoding>
+					<properties>
+						<name>${project.name}</name>
+						<url>${project.url}</url>
+						<licenseUrl>http://www.spout.org/SpoutDevLicenseV1.txt</licenseUrl>
+					</properties>
+				</configuration>
+			</plugin>
 			<!-- Compile plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -133,7 +178,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.3.2</version>
+				<version>2.4</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -146,7 +191,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>1.5</version>
+				<version>1.6</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -154,9 +199,17 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<filters>
+								<filter>
+									<artifact>jdom:jdom</artifact>
+									<includes>
+										<include>org/jdom/**</include>
+									</includes>
+								</filter>
+							</filters>
 							<artifactSet>
 								<excludes>
-									<exclude>junit:*</exclude>
+									<exclude>junit:junit</exclude>
 								</excludes>
 							</artifactSet>
 						</configuration>
@@ -171,20 +224,19 @@
 		<!-- Windows -->
 		<profile>
 			<id>package-win</id>
-			<!--<activation>
+			<activation>
 				<os>
 					<family>windows</family>
 				</os>
-			</activation>-->
+			</activation>
 			<build>
 				<plugins>
 					<plugin>
-						<groupId>org.bluestemsoftware.open.maven.plugin</groupId>
-						<artifactId>launch4j-plugin</artifactId>
-						<version>1.5.0.0</version>
+						<groupId>com.akathist.maven.plugins.launch4j</groupId>
+						<artifactId>launch4j-maven-plugin</artifactId>
+						<version>1.5.1</version>
 						<executions>
 							<execution>
-								<id>launch4j</id>
 								<phase>package</phase>
 								<goals>
 									<goal>launch4j</goal>
@@ -196,8 +248,7 @@
 										<mutexName>${project.name}</mutexName>
 										<windowTitle>${project.name}</windowTitle>
 									</singleInstance>
-									<outfile>${project.build.directory}/${project.artifactId}-${project.version}.exe
-									</outfile>
+									<outfile>${project.build.directory}/${project.artifactId}-${project.version}.exe</outfile>
 									<classPath>
 										<mainClass>${mainClass}</mainClass>
 										<addDependencies>false</addDependencies>
@@ -208,12 +259,12 @@
 									</jre>
 									<icon>${basedir}/src/main/resources/exe/favicon.ico</icon>
 									<versionInfo>
-										<fileVersion>2.0.0.${build.number}</fileVersion>
-										<txtFileVersion>2.0.0.${build.number}</txtFileVersion>
+										<fileVersion>2.0.0.${buildNumber}</fileVersion>
+										<txtFileVersion>2.0.0.${buildNumber}</txtFileVersion>
 										<fileDescription>${project.name}</fileDescription>
 										<copyright>Copyright (c) 2011-2012 SpoutDev</copyright>
-										<productVersion>2.0.0.${build.number}</productVersion>
-										<txtProductVersion>2.0.0.${build.number}</txtProductVersion>
+										<productVersion>2.0.0.${buildNumber}</productVersion>
+										<txtProductVersion>2.0.0.${buildNumber}</txtProductVersion>
 										<productName>${project.name}</productName>
 										<internalName>${project.artifactId}</internalName>
 										<originalFilename>${project.artifactId}.exe</originalFilename>
@@ -221,6 +272,52 @@
 								</configuration>
 							</execution>
 						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<!-- Mac OS X -->
+		<profile>
+			<id>package-mac</id>
+			<!--<activation>
+				<os>
+					<family>mac</family>
+				</os>
+			</activation>-->
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>osxappbundle-maven-plugin</artifactId>
+						<version>1.0-alpha-2</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>bundle</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<mainClass>${mainClass}</mainClass>
+							<bundleName>${project.name}</bundleName>
+							<version>${project.version}</version>
+							<iconFile>${basedir}/src/main/resources/app/favicon.icns</iconFile>
+							<dictionaryFile>src/main/resources/app/Info.plist.template</dictionaryFile>
+							<javaApplicationStub>${basedir}/src/main/resources/app/JavaApplicationStub</javaApplicationStub>
+							<zipFile>${project.build.directory}/${project.build.finalName}.zip</zipFile>
+							<jvmVersion>1.5+</jvmVersion>
+							<vmOptions>-Xms512M -Xmx1024M -Xdock:name=Spoutcraft -Xdock:icon="favicon.icns"</vmOptions>
+							<additionalResources>
+								<fileSet>
+									<directory>${basedir}</directory>
+									<includes>
+										<include>LICENSE.txt</include>
+									</includes>
+								</fileSet>
+							</additionalResources>
+							<excludeArtifactIds>commons-codec,commons-io,jdom</excludeArtifactIds>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>
